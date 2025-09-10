@@ -11,7 +11,6 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-FLV6V2X8FW');
   </script>
 
@@ -59,6 +58,18 @@
     .controls button:hover {
       color: #f9fafb;
     }
+
+    .tip {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-top: 1rem;
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+    .tip.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
@@ -71,6 +82,8 @@
     <button onclick="pauseTimer()" aria-label="Pause"><i data-lucide="pause"></i></button>
     <button onclick="resetTimer()" aria-label="Reset"><i data-lucide="rotate-ccw"></i></button>
   </div>
+
+  <div id="tip" class="tip">💡 Drag on the circle to set a custom start time (within 60 min)</div>
 
   <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
@@ -87,6 +100,7 @@
     const ctx = canvas.getContext("2d");
     const timeDisplay = document.getElementById("time");
     const beep = document.getElementById("beep");
+    const tip = document.getElementById("tip");
 
     let size = 0;
     let radius = 0;
@@ -136,7 +150,6 @@
       if (isRunning) return;
       isRunning = true;
 
-      // Google Analytics event
       gtag('event', 'timer_started', { value: timeLeft });
 
       timer = setInterval(() => {
@@ -147,8 +160,6 @@
           clearInterval(timer);
           isRunning = false;
           beep.play();
-
-          // Google Analytics event
           gtag('event', 'timer_finished');
         }
       }, 1000);
@@ -165,7 +176,6 @@
       timeLeft = duration;
       updateUI();
 
-      // Google Analytics event
       gtag('event', 'timer_reset');
     }
 
@@ -180,12 +190,18 @@
       duration = seconds;
       timeLeft = seconds;
       updateUI();
+
+      // hide tip after first use
+      tip.classList.add("hidden");
     });
 
     window.addEventListener("resize", resizeCanvas);
 
     // Init
     resizeCanvas();
+
+    // Auto hide tip after 7 seconds
+    setTimeout(() => tip.classList.add("hidden"), 7000);
   </script>
 </body>
 </html>
