@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visual Timer</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #f3f4f6;
+    }
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
+    svg { width: 250px; height: 250px; margin-bottom: 1rem; }
+    .time { font-size: 2rem; margin-bottom: 1rem; font-family: monospace; }
+    .controls button {
+      margin: 0 0.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+    }
+    .start { background: green; }
+    .pause { background: orange; }
+    .reset { background: red; }
+    .duration { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Visual Timer</h1>
+
+  <!-- Circle Timer -->
+  <svg viewBox="0 0 240 240">
+    <circle cx="120" cy="120" r="100" stroke="gray" stroke-width="15" fill="none" opacity="0.2"/>
+    <circle id="progress" cx="120" cy="120" r="100"
+      stroke="tomato" stroke-width="15" fill="none"
+      stroke-dasharray="628" stroke-dashoffset="0" stroke-linecap="round"/>
+  </svg>
+
+  <!-- Time Left -->
+  <div id="time" class="time">1:00</div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="start" onclick="startTimer()">Start</button>
+    <button class="pause" onclick="pauseTimer()">Pause</button>
+    <button class="reset" onclick="resetTimer()">Reset</button>
+  </div>
+
+  <!-- Duration Input -->
+  <div class="duration">
+    <label>Duration (seconds):</label>
+    <input type="number" id="durationInput" value="60" min="1" onchange="setDuration(this.value)">
+  </div>
+
+  <!-- Beep Sound -->
+  <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+
+  <script>
+    let duration = 60;
+    let timeLeft = 60;
+    let isRunning = false;
+    let timer = null;
+
+    const radius = 100;
+    const circumference = 2 * Math.PI * radius;
+    const progress = document.getElementById("progress");
+    const timeDisplay = document.getElementById("time");
+    const beep = document.getElementById("beep");
+
+    progress.setAttribute("stroke-dasharray", circumference);
+    updateUI();
+
+    function updateUI() {
+      // Circle
+      const offset = circumference - (timeLeft / duration) * circumference;
+      progress.setAttribute("stroke-dashoffset", offset);
+
+      // Time
+      const m = Math.floor(timeLeft / 60);
+      const s = String(timeLeft % 60).padStart(2, "0");
+      timeDisplay.textContent = `${m}:${s}`;
+    }
+
+    function startTimer() {
+      if (timeLeft === 0) timeLeft = duration;
+      if (isRunning) return;
+      isRunning = true;
+      timer = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+          updateUI();
+        } else {
+          clearInterval(timer);
+          isRunning = false;
+          beep.play();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      clearInterval(timer);
+      isRunning = false;
+    }
+
+    function resetTimer() {
+      clearInterval(timer);
+      isRunning = false;
+      timeLeft = duration;
+      updateUI();
+    }
+
+    function setDuration(val) {
+      duration = Number(val);
+      timeLeft = duration;
+      updateUI();
+    }
+  </script>
+</body>
+</html>
