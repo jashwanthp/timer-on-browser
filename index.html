@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>1 Timer</title>
+  <title>Timer</title>
   <style>
     body {
       margin: 0;
@@ -12,13 +12,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #111827; /* dark mode */
+      background: #111827;
       color: #f9fafb;
       font-family: system-ui, sans-serif;
-    }
-
-    h1 {
-      margin-bottom: 1rem;
+      overflow: hidden;
     }
 
     canvas {
@@ -56,9 +53,7 @@
 <body>
 
   <canvas id="timerCanvas" width="320" height="320"></canvas>
-
   <div id="time" class="time">60:00</div>
-
   <div class="controls">
     <button onclick="startTimer()" aria-label="Start"><i data-lucide="play"></i></button>
     <button onclick="pauseTimer()" aria-label="Pause"><i data-lucide="pause"></i></button>
@@ -70,7 +65,7 @@
   <script>
     lucide.createIcons();
 
-    const FULL = 60 * 60; // 60 minutes in seconds
+    const FULL = 60 * 60;
     let duration = FULL;
     let timeLeft = FULL;
     let isRunning = false;
@@ -90,14 +85,12 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // Background circle
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.strokeStyle = "#374151";
       ctx.lineWidth = 15;
       ctx.stroke();
 
-      // Progress fill
       const angle = (timeLeft / FULL) * 2 * Math.PI;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -142,7 +135,6 @@
       updateUI();
     }
 
-    // Click to set time
     canvas.addEventListener("click", (e) => {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left - canvas.width / 2;
@@ -155,7 +147,6 @@
       updateUI();
     });
 
-    // Init
     updateUI();
   </script>
 </body>
