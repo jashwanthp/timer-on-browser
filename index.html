@@ -26,6 +26,7 @@
       color: #f9fafb;
       font-family: system-ui, sans-serif;
       overflow: hidden;
+      position: relative;
     }
 
     canvas {
@@ -59,12 +60,20 @@
       color: #f9fafb;
     }
 
+    /* Popup tip */
     .tip {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(55, 65, 81, 0.95); /* slate-700 */
+      color: #f9fafb;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
       font-size: 0.9rem;
-      color: #9ca3af;
-      margin-top: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
       opacity: 1;
       transition: opacity 1s ease;
+      max-width: 260px;
     }
     .tip.hidden {
       opacity: 0;
@@ -74,7 +83,7 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-  <div id="tip" class="tip">💡 Drag on the circle to set a custom start time (within 60 min)</div>
+
   <canvas id="timerCanvas"></canvas>
   <div id="time" class="time">60:00</div>
   <div class="controls">
@@ -82,6 +91,9 @@
     <button onclick="pauseTimer()" aria-label="Pause"><i data-lucide="pause"></i></button>
     <button onclick="resetTimer()" aria-label="Reset"><i data-lucide="rotate-ccw"></i></button>
   </div>
+
+  <!-- Popup tip -->
+  <div id="tip" class="tip">💡 Drag on the circle to set a custom start time (within 60 min)</div>
 
   <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
@@ -189,7 +201,7 @@
       timeLeft = seconds;
       updateUI();
 
-      // hide tip after first use
+      // Hide tip immediately after first use
       tip.classList.add("hidden");
     });
 
