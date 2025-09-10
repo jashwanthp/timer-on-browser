@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Time Timer</title>
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-FLV6V2X8FW"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-FLV6V2X8FW');
+  </script>
+
   <style>
     body {
       margin: 0;
@@ -124,6 +135,10 @@
       if (timeLeft === 0) timeLeft = duration;
       if (isRunning) return;
       isRunning = true;
+
+      // Google Analytics event
+      gtag('event', 'timer_started', { value: timeLeft });
+
       timer = setInterval(() => {
         if (timeLeft > 0) {
           timeLeft--;
@@ -132,6 +147,9 @@
           clearInterval(timer);
           isRunning = false;
           beep.play();
+
+          // Google Analytics event
+          gtag('event', 'timer_finished');
         }
       }, 1000);
     }
@@ -146,9 +164,12 @@
       isRunning = false;
       timeLeft = duration;
       updateUI();
+
+      // Google Analytics event
+      gtag('event', 'timer_reset');
     }
 
-    // Click to set time
+    // Click to set custom start time
     canvas.addEventListener("click", (e) => {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left - canvas.width / 2;
