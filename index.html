@@ -1,140 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visual Timer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Timer Canvas</title>
   <style>
-    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
-
     body {
-      font-family: "Inter", sans-serif;
+      margin: 0;
+      height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #f9fafb, #eef2f7);
-      color: #111827;
+      background: #111827; /* dark mode */
+      color: #f9fafb;
+      font-family: system-ui, sans-serif;
     }
 
     h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      color: #1f2937;
-      text-align: center;
+      margin-bottom: 1rem;
     }
 
-    svg {
-      width: 280px;
-      height: 280px;
-      margin-bottom: 1.5rem;
-      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
-      transform: rotate(-90deg); /* Makes the circle start at top */
+    canvas {
+      background: #111827;
+      cursor: pointer;
     }
 
     .time {
       font-size: 2.5rem;
-      margin-bottom: 1.5rem;
       font-weight: 600;
-      color: #111827;
+      margin: 1rem 0;
     }
 
     .controls {
       display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
+      gap: 2rem;
+      margin-top: 0.5rem;
     }
 
     .controls button {
-      padding: 0.6rem 1.2rem;
+      background: none;
       border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: white;
+      color: #9ca3af;
+      font-size: 2rem;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      transition: color 0.2s;
     }
 
     .controls button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    }
-
-    .start { background: #10b981; }   /* Emerald */
-    .pause { background: #f59e0b; }   /* Amber */
-    .reset { background: #ef4444; }   /* Red */
-
-    .duration {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.95rem;
-      color: #374151;
-    }
-
-    .duration input {
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      padding: 0.3rem 0.6rem;
-      font-size: 1rem;
-      width: 80px;
+      color: #f9fafb;
     }
   </style>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-  <h1>Visual Timer</h1>
+  <h1>Time Timer Clone</h1>
 
-  <!-- Circle Timer -->
-  <svg viewBox="0 0 240 240">
-    <circle cx="120" cy="120" r="100" stroke="#e5e7eb" stroke-width="15" fill="none"/>
-    <circle id="progress" cx="120" cy="120" r="100"
-      stroke="#ef4444" stroke-width="15" fill="none"
-      stroke-dasharray="628" stroke-dashoffset="628"
-      stroke-linecap="round"
-      style="transition: stroke-dashoffset 1s linear;" />
-  </svg>
+  <canvas id="timerCanvas" width="320" height="320"></canvas>
 
-  <!-- Time Left -->
-  <div id="time" class="time">1:00</div>
+  <div id="time" class="time">60:00</div>
 
-  <!-- Controls -->
   <div class="controls">
-    <button class="start" onclick="startTimer()">Start</button>
-    <button class="pause" onclick="pauseTimer()">Pause</button>
-    <button class="reset" onclick="resetTimer()">Reset</button>
+    <button onclick="startTimer()" aria-label="Start"><i data-lucide="play"></i></button>
+    <button onclick="pauseTimer()" aria-label="Pause"><i data-lucide="pause"></i></button>
+    <button onclick="resetTimer()" aria-label="Reset"><i data-lucide="rotate-ccw"></i></button>
   </div>
 
-  <!-- Duration Input -->
-  <div class="duration">
-    <label>Duration (seconds):</label>
-    <input type="number" id="durationInput" value="60" min="1" onchange="setDuration(this.value)">
-  </div>
-
-  <!-- Beep Sound -->
   <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
 
   <script>
-    let duration = 60;
-    let timeLeft = 60;
+    lucide.createIcons();
+
+    const FULL = 60 * 60; // 60 minutes in seconds
+    let duration = FULL;
+    let timeLeft = FULL;
     let isRunning = false;
     let timer = null;
 
-    const radius = 100;
-    const circumference = 2 * Math.PI * radius;
-    const progress = document.getElementById("progress");
+    const canvas = document.getElementById("timerCanvas");
+    const ctx = canvas.getContext("2d");
     const timeDisplay = document.getElementById("time");
     const beep = document.getElementById("beep");
 
-    progress.setAttribute("stroke-dasharray", circumference);
+    function drawTimer() {
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const r = 140;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // Background circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.strokeStyle = "#374151";
+      ctx.lineWidth = 15;
+      ctx.stroke();
+
+      // Progress fill
+      const angle = (timeLeft / FULL) * 2 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + angle, false);
+      ctx.closePath();
+      ctx.fillStyle = "#ef4444";
+      ctx.fill();
+    }
 
     function updateUI() {
-      const offset = circumference - (timeLeft / duration) * circumference;
-      progress.setAttribute("stroke-dashoffset", offset);
-
+      drawTimer();
       const m = Math.floor(timeLeft / 60);
       const s = String(timeLeft % 60).padStart(2, "0");
       timeDisplay.textContent = `${m}:${s}`;
@@ -168,13 +143,20 @@
       updateUI();
     }
 
-    function setDuration(val) {
-      duration = Number(val);
-      timeLeft = duration;
+    // Click to set time
+    canvas.addEventListener("click", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left - canvas.width / 2;
+      const y = e.clientY - rect.top - canvas.height / 2;
+      let angle = Math.atan2(y, x) * (180 / Math.PI) + 90;
+      if (angle < 0) angle += 360;
+      const seconds = Math.round((angle / 360) * FULL);
+      duration = seconds;
+      timeLeft = seconds;
       updateUI();
-    }
+    });
 
-    // Init UI
+    // Init
     updateUI();
   </script>
 </body>
