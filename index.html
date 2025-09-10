@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Timer</title>
+  <title>Time Timer</title>
   <style>
     body {
       margin: 0;
@@ -19,12 +19,13 @@
     }
 
     canvas {
-      background: #111827;
       cursor: pointer;
+      max-width: 90vw;
+      max-height: 60vh;
     }
 
     .time {
-      font-size: 2.5rem;
+      font-size: clamp(1.5rem, 4vw, 3rem);
       font-weight: 600;
       margin: 1rem 0;
     }
@@ -39,7 +40,7 @@
       background: none;
       border: none;
       color: #9ca3af;
-      font-size: 2rem;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
       cursor: pointer;
       transition: color 0.2s;
     }
@@ -52,7 +53,7 @@
 </head>
 <body>
 
-  <canvas id="timerCanvas" width="320" height="320"></canvas>
+  <canvas id="timerCanvas"></canvas>
   <div id="time" class="time">60:00</div>
   <div class="controls">
     <button onclick="startTimer()" aria-label="Start"><i data-lucide="play"></i></button>
@@ -76,25 +77,37 @@
     const timeDisplay = document.getElementById("time");
     const beep = document.getElementById("beep");
 
+    let size = 0;
+    let radius = 0;
+
+    function resizeCanvas() {
+      size = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.6);
+      canvas.width = size;
+      canvas.height = size;
+      radius = size / 2 - 20;
+      updateUI();
+    }
+
     function drawTimer() {
       const w = canvas.width;
       const h = canvas.height;
       const cx = w / 2;
       const cy = h / 2;
-      const r = 140;
 
       ctx.clearRect(0, 0, w, h);
 
+      // Background circle
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.strokeStyle = "#374151";
-      ctx.lineWidth = 15;
+      ctx.lineWidth = size * 0.05;
       ctx.stroke();
 
+      // Progress fill
       const angle = (timeLeft / FULL) * 2 * Math.PI;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + angle, false);
+      ctx.arc(cx, cy, radius, -Math.PI / 2, -Math.PI / 2 + angle, false);
       ctx.closePath();
       ctx.fillStyle = "#ef4444";
       ctx.fill();
@@ -135,6 +148,7 @@
       updateUI();
     }
 
+    // Click to set time
     canvas.addEventListener("click", (e) => {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left - canvas.width / 2;
@@ -147,7 +161,10 @@
       updateUI();
     });
 
-    updateUI();
+    window.addEventListener("resize", resizeCanvas);
+
+    // Init
+    resizeCanvas();
   </script>
 </body>
 </html>
