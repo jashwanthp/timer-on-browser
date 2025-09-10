@@ -5,31 +5,84 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Visual Timer</title>
   <style>
+    @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap");
+
     body {
-      font-family: sans-serif;
+      font-family: "Inter", sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
-      background: #f3f4f6;
+      background: linear-gradient(135deg, #f9fafb, #eef2f7);
+      color: #111827;
     }
-    h1 { font-size: 2rem; margin-bottom: 1rem; }
-    svg { width: 250px; height: 250px; margin-bottom: 1rem; }
-    .time { font-size: 2rem; margin-bottom: 1rem; font-family: monospace; }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: #1f2937;
+      text-align: center;
+    }
+
+    svg {
+      width: 280px;
+      height: 280px;
+      margin-bottom: 1.5rem;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+      transform: rotate(-90deg); /* Makes the circle start at top */
+    }
+
+    .time {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
     .controls button {
-      margin: 0 0.5rem;
-      padding: 0.5rem 1rem;
+      padding: 0.6rem 1.2rem;
       border: none;
       border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
       color: white;
       cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .start { background: green; }
-    .pause { background: orange; }
-    .reset { background: red; }
-    .duration { margin-top: 1rem; }
+
+    .controls button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .start { background: #10b981; }   /* Emerald */
+    .pause { background: #f59e0b; }   /* Amber */
+    .reset { background: #ef4444; }   /* Red */
+
+    .duration {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+
+    .duration input {
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      padding: 0.3rem 0.6rem;
+      font-size: 1rem;
+      width: 80px;
+    }
   </style>
 </head>
 <body>
@@ -37,10 +90,12 @@
 
   <!-- Circle Timer -->
   <svg viewBox="0 0 240 240">
-    <circle cx="120" cy="120" r="100" stroke="gray" stroke-width="15" fill="none" opacity="0.2"/>
+    <circle cx="120" cy="120" r="100" stroke="#e5e7eb" stroke-width="15" fill="none"/>
     <circle id="progress" cx="120" cy="120" r="100"
-      stroke="tomato" stroke-width="15" fill="none"
-      stroke-dasharray="628" stroke-dashoffset="0" stroke-linecap="round"/>
+      stroke="#ef4444" stroke-width="15" fill="none"
+      stroke-dasharray="628" stroke-dashoffset="628"
+      stroke-linecap="round"
+      style="transition: stroke-dashoffset 1s linear;" />
   </svg>
 
   <!-- Time Left -->
@@ -75,14 +130,11 @@
     const beep = document.getElementById("beep");
 
     progress.setAttribute("stroke-dasharray", circumference);
-    updateUI();
 
     function updateUI() {
-      // Circle
       const offset = circumference - (timeLeft / duration) * circumference;
       progress.setAttribute("stroke-dashoffset", offset);
 
-      // Time
       const m = Math.floor(timeLeft / 60);
       const s = String(timeLeft % 60).padStart(2, "0");
       timeDisplay.textContent = `${m}:${s}`;
@@ -121,6 +173,9 @@
       timeLeft = duration;
       updateUI();
     }
+
+    // Init UI
+    updateUI();
   </script>
 </body>
 </html>
