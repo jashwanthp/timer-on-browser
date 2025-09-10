@@ -60,28 +60,31 @@
       color: #f9fafb;
     }
 
-  /* Responsive Popup tip */
+    /* Responsive Glass-like Popup tip */
     .tip {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: rgba(55, 65, 81, 0.95); /* slate-700 */
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(255, 255, 255, 0.08); /* transparent glass */
       color: #f9fafb;
-      padding: clamp(0.4rem, 2vw, 0.75rem) clamp(0.6rem, 3vw, 1rem);
-      border-radius: 0.5rem;
-      font-size: clamp(0.75rem, 2vw, 0.95rem);
+      padding: clamp(0.3rem, 1.5vw, 0.6rem) clamp(0.5rem, 2vw, 0.9rem);
+      border-radius: 0.75rem;
+      font-size: clamp(0.7rem, 1.8vw, 0.9rem);
       line-height: 1.4;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px); /* Safari */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       opacity: 1;
-      transition: opacity 3s ease;
-      max-width: min(80vw, 300px);
-      word-wrap: break-word;
+      transition: opacity 2s ease;
+      max-width: min(70vw, 240px);
+      pointer-events: none; /* don’t block clicks */
+      z-index: 1000;
     }
-  
+    
     .tip.hidden {
       opacity: 0;
-      pointer-events: none;
     }
+    
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
