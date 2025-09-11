@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://freetimer.netlify.app/sitemap.xml
+
+# Explicitly allow common AI/search bots
+User-agent: GPTBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
