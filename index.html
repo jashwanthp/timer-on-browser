@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Timer</title>
-
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-FLV6V2X8FW"></script>
   <script>
@@ -13,7 +12,6 @@
     gtag('js', new Date());
     gtag('config', 'G-FLV6V2X8FW');
   </script>
-
   <style>
     body {
       margin: 0;
@@ -28,25 +26,21 @@
       overflow: hidden;
       position: relative;
     }
-
     canvas {
       cursor: pointer;
       max-width: 90vw;
       max-height: 60vh;
     }
-
     .time {
       font-size: clamp(1.5rem, 4vw, 3rem);
       font-weight: 600;
       margin: 1rem 0;
     }
-
     .controls {
       display: flex;
       gap: 2rem;
       margin-top: 0.5rem;
     }
-
     .controls button {
       background: none;
       border: none;
@@ -55,41 +49,53 @@
       cursor: pointer;
       transition: color 0.2s;
     }
-
     .controls button:hover {
       color: #f9fafb;
     }
-
     /* Responsive Glass-like Popup tip */
     .tip {
       position: absolute;
       top: 0.5rem;
       right: 0.5rem;
-      background: rgba(255, 255, 255, 0.08); /* transparent glass */
+      background: rgba(255, 255, 255, 0.08);
       color: #f9fafb;
       padding: clamp(0.3rem, 1.5vw, 0.6rem) clamp(0.5rem, 2vw, 0.9rem);
       border-radius: 0.75rem;
       font-size: clamp(0.7rem, 1.8vw, 0.9rem);
       line-height: 1.4;
       backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px); /* Safari */
+      -webkit-backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       opacity: 1;
       transition: opacity 2s ease;
       max-width: min(70vw, 240px);
-      pointer-events: none; /* don’t block clicks */
+      pointer-events: none;
       z-index: 1000;
     }
-    
+
     .tip.hidden {
       opacity: 0;
     }
-    
+
+    .battery-status {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f9fafb;
+      padding: 0.3rem 0.6rem;
+      border-radius: 0.5rem;
+      font-size: 0.8rem;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
   </style>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-
   <canvas id="timerCanvas"></canvas>
   <div id="time" class="time">60:00</div>
   <div class="controls">
@@ -97,29 +103,102 @@
     <button onclick="pauseTimer()" aria-label="Pause"><i data-lucide="pause"></i></button>
     <button onclick="resetTimer()" aria-label="Reset"><i data-lucide="rotate-ccw"></i></button>
   </div>
-
+  <!-- Battery status indicator -->
+  <div id="batteryStatus" class="battery-status" style="display: none;">Battery Saving Mode</div>
   <!-- Popup tip -->
   <div id="tip" class="tip">💡 Click on the circle to set a custom start time.</div>
-
   <audio id="beep" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
-
   <script>
     lucide.createIcons();
 
+    // Timer constants and state
     const FULL = 60 * 60;
     let duration = FULL;
     let timeLeft = FULL;
     let isRunning = false;
     let timer = null;
+    let endTime = null;
+    let lastUpdateTime = 0;
+    let wakeLock = null;
 
+    // Canvas elements
     const canvas = document.getElementById("timerCanvas");
     const ctx = canvas.getContext("2d");
     const timeDisplay = document.getElementById("time");
     const beep = document.getElementById("beep");
     const tip = document.getElementById("tip");
+    const batteryStatus = document.getElementById("batteryStatus");
 
     let size = 0;
     let radius = 0;
+    let isPageVisible = true;
+    let lastDrawnSeconds = -1; // Track last drawn time to avoid unnecessary redraws
+
+    // System time based timer implementation
+    function updateTimerFromSystem() {
+      if (!isRunning || !endTime) return;
+
+      const now = Date.now();
+      const remainingTime = Math.max(0, endTime - now);
+      const newTimeLeft = Math.floor(remainingTime / 1000);
+
+      // Only update if seconds have actually changed
+      if (newTimeLeft !== timeLeft) {
+        timeLeft = newTimeLeft;
+
+        // Only redraw if the displayed seconds changed
+        if (newTimeLeft !== lastDrawnSeconds) {
+          updateUI();
+          lastDrawnSeconds = newTimeLeft;
+        }
+
+        // Timer finished
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          isRunning = false;
+          endTime = null;
+          beep.play();
+          gtag('event', 'timer_finished');
+          releaseWakeLock();
+        }
+      }
+    }
+
+    // Page Visibility API implementation
+    function handleVisibilityChange() {
+      const wasVisible = isPageVisible;
+      isPageVisible = !document.hidden;
+
+      if (isPageVisible && !wasVisible && isRunning) {
+        // Page became visible - resume with accurate time
+        updateTimerFromSystem();
+        batteryStatus.style.display = 'none';
+      } else if (!isPageVisible && wasVisible) {
+        // Page became hidden - show battery saving indicator
+        batteryStatus.style.display = 'block';
+      }
+    }
+
+    // Wake Lock API implementation
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator && !wakeLock) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => {
+            wakeLock = null;
+          });
+        } catch (err) {
+          console.log('Wake lock failed:', err.message);
+        }
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    }
 
     function resizeCanvas() {
       size = Math.min(window.innerWidth * 0.8, window.innerHeight * 0.6);
@@ -164,34 +243,38 @@
     function startTimer() {
       if (timeLeft === 0) timeLeft = duration;
       if (isRunning) return;
+
       isRunning = true;
+      endTime = Date.now() + (timeLeft * 1000);
+      lastDrawnSeconds = timeLeft;
+
+      // Request wake lock for mobile devices
+      requestWakeLock();
 
       gtag('event', 'timer_started', { value: timeLeft });
 
-      timer = setInterval(() => {
-        if (timeLeft > 0) {
-          timeLeft--;
-          updateUI();
-        } else {
-          clearInterval(timer);
-          isRunning = false;
-          beep.play();
-          gtag('event', 'timer_finished');
-        }
-      }, 1000);
+      // Use 1-second intervals for battery efficiency
+      timer = setInterval(updateTimerFromSystem, 1000);
+
+      // Update immediately
+      updateTimerFromSystem();
     }
 
     function pauseTimer() {
       clearInterval(timer);
       isRunning = false;
+      endTime = null;
+      releaseWakeLock();
     }
 
     function resetTimer() {
       clearInterval(timer);
       isRunning = false;
       timeLeft = duration;
+      endTime = null;
+      lastDrawnSeconds = -1;
       updateUI();
-
+      releaseWakeLock();
       gtag('event', 'timer_reset');
     }
 
@@ -205,18 +288,27 @@
       const seconds = Math.round((angle / 360) * FULL);
       duration = seconds;
       timeLeft = seconds;
+      lastDrawnSeconds = -1;
       updateUI();
-
-      // Hide tip immediately after first use
       tip.classList.add("hidden");
     });
 
+    // Event listeners
     window.addEventListener("resize", resizeCanvas);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
-    // Init
+    // Handle wake lock release on page hide
+    document.addEventListener("visibilitychange", async () => {
+      if (wakeLock !== null && document.visibilityState === "visible" && isRunning) {
+        // Reacquire wake lock when page becomes visible
+        await requestWakeLock();
+      }
+    });
+
+    // Initialize
     resizeCanvas();
 
-    // Auto hide tip after 7 seconds
+    // Auto hide tip after 3 seconds
     setTimeout(() => tip.classList.add("hidden"), 3000);
   </script>
 </body>
